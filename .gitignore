@@ -1,0 +1,12 @@
+node_modules/
+# Folder native dibuat ulang oleh CI lewat "npx cap add android"
+android/
+ios/
+*.apk
+*.aab
+*.zip
+# JANGAN PERNAH commit kunci penandatanganan
+*.keystore
+*.jks
+keystore.b64
+.DS_Store

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#120d0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Tambang Emas Idle</title>
+<style>
+:root{--bg:#1b1410;--card:#2a1f18;--card2:#3a2b20;--gold:#ffc83d;--cash:#5be37d;--txt:#f5ead9;--mut:#b8a590;--btn:#3fa34d;--btn2:#2e7d3a;--warn:#e0552f;--rh:146px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{max-width:560px;margin:0 auto;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+
+/* bar atas */
+.top{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:calc(8px + env(safe-area-inset-top)) 8px 8px;background:#120d0a;border-bottom:2px solid #000}
+.pill{display:flex;align-items:center;gap:8px;background:#2b2118;border:2px solid #4a3828;border-radius:14px;padding:4px 10px;flex:1;min-width:0}
+.pill .ic{font-size:22px}
+.pill b{font-size:18px;display:block;line-height:1.1}
+.pill small{color:var(--mut);font-size:11px}
+.pill.cash b{color:var(--cash)}
+.pill.gold{flex:0 0 auto;border-color:#7a5a12}
+.pill.gold b{color:var(--gold)}
+.pill .plus{background:var(--gold);color:#3a2800;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-weight:900;font-size:13px}
+.pill.gold:active{transform:scale(.95)}
+.boost{background:linear-gradient(90deg,#7a2d00,#d9730d);text-align:center;padding:5px;font-weight:700;font-size:13px}
+.boost[hidden]{display:none}
+
+/* baris umum */
+.row{position:relative;background:var(--card)}
+.strip{position:relative;overflow:hidden;cursor:pointer}
+.ent{position:absolute;bottom:6px;font-size:30px;line-height:1;transform:translateX(-50%);will-change:left,transform}
+.ent.dig{animation:sw .3s infinite alternate}
+@keyframes sw{from{rotate:-12deg}to{rotate:12deg}}
+.hint{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#000b;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;animation:pulse 1s infinite alternate;pointer-events:none;white-space:nowrap;z-index:3}
+@keyframes pulse{from{opacity:.5}to{opacity:1}}
+.pop{position:absolute;left:50%;top:34px;font-weight:900;color:var(--cash);text-shadow:0 1px 2px #000;animation:up 1s forwards;pointer-events:none;z-index:4}
+@keyframes up{to{transform:translateY(-34px);opacity:0}}
+.body{display:flex;gap:8px;padding:6px 8px;align-items:center}
+.info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.ttl{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl small{color:var(--gold);margin-left:4px;font-size:12px}
+.sub{font-size:11.5px;color:var(--mut);line-height:1.35}
+.bar{height:7px;background:#000a;border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb000,#ffe27a)}
+.acts{display:flex;flex-direction:column;gap:4px;width:100px;flex:0 0 100px}
+.acts button{border-radius:10px;padding:4px 4px;background:var(--btn);box-shadow:0 3px 0 var(--btn2);font-weight:800;font-size:12px;line-height:1.15}
+.acts button b{display:block;font-size:12.5px}
+.acts button.mg{background:#3d6fcb;box-shadow:0 3px 0 #2a4e94;padding:6px 4px}
+.acts button.dis{background:#555;box-shadow:0 3px 0 #3b3b3b;color:#bbb}
+.acts button.own{background:#6a5a8f;box-shadow:0 3px 0 #4b3f69}
+.acts button:active{transform:translateY(2px);box-shadow:0 1px 0 #0006}
+
+/* permukaan */
+.row.sf{margin:0 8px;border:2px solid #000;border-bottom:0}
+.row.wh{border-radius:14px 14px 0 0;overflow:hidden}
+.s-wh{height:100px;background:linear-gradient(#6fc0ff 0,#bfe8ff 62%,#5aa83f 62%,#438a2e 100%)}
+.s-wh::before,.s-wh::after{content:"";position:absolute;bottom:38%;background:#8fb3cf;clip-path:polygon(50% 0,0 100%,100% 100%)}
+.s-wh::before{left:30%;width:110px;height:56px}
+.s-wh::after{left:46%;width:80px;height:38px;background:#a7c4da}
+.s-wh .ent{font-size:34px}
+.s-wh .cloud{position:absolute;top:10px;font-size:26px;opacity:.9;pointer-events:none}
+.row.el{border-bottom:3px solid #000}
+.row.el .body{background:#2f3640}
+.row.wh .body{background:#37424f}
+
+/* tambang */
+.mine{display:flex;margin:0 8px;border:2px solid #000;border-top:0;background:#3a281b}
+.shaftcol{position:relative;width:64px;flex:0 0 64px;overflow:hidden;cursor:pointer;
+  background:repeating-linear-gradient(180deg,#00000022 0 2px,transparent 2px 14px),linear-gradient(90deg,#15171b,#2d323a 18%,#2d323a 82%,#15171b);border-right:3px solid #0d0e10}
+.fl{position:absolute;left:50%;transform:translateX(-50%);width:26px;height:26px;border-radius:6px;background:#4a5260;border:2px solid #20242b;color:#cfd6df;font-style:normal;font-weight:800;font-size:13px;display:grid;place-items:center}
+.cabin{position:absolute;left:7px;top:0;width:50px;height:52px;border-radius:9px;z-index:2;
+  background:linear-gradient(#b8ecff,#4aa8d8);border:3px solid #dfe6ec;box-shadow:0 3px 8px #000a;display:grid;place-items:center;font-size:24px;will-change:transform}
+.cabin .cg{position:absolute;right:-2px;bottom:-4px;font-size:16px}
+.shafts{flex:1;min-width:0}
+.shaft{height:var(--rh);border-bottom:3px solid #1a110c;background:linear-gradient(#5b3a26,#3f281a);overflow:hidden}
+.shaft .strip{height:64px}
+.s-sh{background:linear-gradient(#241910 0,#33261b 72%,#6b4a30 72%,#6b4a30 100%);border-bottom:2px solid #1a110c}
+.s-sh .stk{position:absolute;left:5px;top:4px;font-size:11px;font-weight:800;color:var(--gold);text-shadow:0 1px 2px #000}
+.shaft .body{height:calc(var(--rh) - 64px - 5px);background:#0003}
+
+.row.unlock{margin:0 8px 10px;border:2px dashed #6b4a30;border-top:0;background:transparent}
+.unl{width:100%;padding:16px;background:#2d2a18;font-weight:800;font-size:15px}
+.unl b{color:var(--cash);display:block;margin-top:2px}
+.unl.dis{opacity:.55}
+
+/* navigasi bawah */
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:560px;z-index:25;display:flex;gap:6px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:#120d0a;border-top:2px solid #000}
+.nav button{flex:1;border-radius:12px;background:#2b2118;border:2px solid #4a3828;font-weight:800;font-size:14px;padding:10px 4px}
+.nav button.boostb{flex:2;background:linear-gradient(#ffa63d,#e0701a);border-color:#8a4300;box-shadow:0 3px 0 #8a4300;color:#2b1200;font-size:16px}
+.nav button:active{transform:scale(.96)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:#000a;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal[hidden]{display:none}
+.sheet{position:relative;width:100%;max-width:560px;max-height:88vh;overflow:auto;background:#241a13;border-radius:20px 20px 0 0;border:2px solid #4a3828;padding:18px 14px 24px}
+.x{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;background:#4a3828;font-weight:800}
+.sheet h2{margin:0 0 10px;font-size:20px}
+.sheet p{color:var(--mut);font-size:13px;line-height:1.45;margin:6px 0}
+.item{background:var(--card2);border-radius:12px;padding:10px;margin:8px 0;display:flex;gap:10px;align-items:center}
+.item .t{flex:1;min-width:0}
+.item .t b{display:block}
+.item .t span{font-size:12px;color:var(--mut)}
+.btn{background:var(--btn);box-shadow:0 3px 0 var(--btn2);padding:9px 14px;border-radius:10px;font-weight:800;white-space:nowrap}
+.btn.gold{background:#d9a21b;box-shadow:0 3px 0 #9a7210;color:#2c1d00}
+.btn.red{background:var(--warn);box-shadow:0 3px 0 #9b3a1d}
+.btn.dis{background:#555;box-shadow:0 3px 0 #3b3b3b;color:#bbb}
+.btn.full{width:100%;margin-top:8px}
+.stat{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #ffffff10}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#000d;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:.25s;z-index:80;pointer-events:none;max-width:90%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.crate{position:fixed;z-index:30;font-size:44px;background:none;animation:fl 2s ease-in-out infinite alternate;filter:drop-shadow(0 4px 6px #000)}
+@keyframes fl{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-14px) rotate(6deg)}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="pill cash"><span class="ic">💵</span><div><b id="cash">0</b><small id="rate">≈ $0/dtk</small></div></div>
+  <button class="pill gold" data-act="shop"><span class="ic">🪙</span><b id="gold">0</b><span class="plus">+</span></button>
+</header>
+<div id="boostBar" class="boost" hidden></div>
+<main id="mine"></main>
+<nav class="nav">
+  <button data-act="shop">🪙 Toko</button>
+  <button class="boostb" data-act="boost">⚡ Boost!</button>
+  <button id="buyBtn" data-act="buymode">x1</button>
+  <button data-act="menu">☰</button>
+</nav>
+<div id="layer"></div>
+<div id="toast"></div>
+<div id="modal" class="modal" hidden><div class="sheet"><button class="x" data-act="close">✕</button><div id="sheet"></div></div></div>
+
+<script>
+(() => {
+'use strict';
+const VERSION = '__VERSION__';
+const KEY = 'tambang_emas_idle_v1';
+const MAX_LEVEL = 1000, MAX_SHAFTS = 15, GROW = 1.16;
+const MILESTONES = [10, 25, 50, 100, 150, 200, 300, 400, 500, 600, 800];
+const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+const RH = 146, CABIN_H = 52;
+document.documentElement.style.setProperty('--rh', RH + 'px');
+
+// ---------- util ----------
+const $ = s => document.querySelector(s);
+const rand = (a, b) => a + Math.random() * (b - a);
+const ms = L => { let m = 1; for (const t of MILESTONES) if (L >= t) m *= 2; return m; };
+const nextMs = L => MILESTONES.find(t => t > L);
+function fmt(n) {
+  if (!isFinite(n)) return '∞';
+  if (n < 1000) return n < 10 && n % 1 !== 0 ? n.toFixed(1) : Math.floor(n).toString();
+  const e = Math.floor(Math.log10(n) / 3);
+  if (e >= SUF.length) return n.toExponential(2).replace('+', '');
+  const v = n / Math.pow(1000, e);
+  return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : v.toFixed(0)) + SUF[e];
+}
+function fmtTime(s) {
+  s = Math.floor(s);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), d = s % 60;
+  return h ? `${h} jam ${m} menit` : m ? `${m} menit ${d} dtk` : `${d} dtk`;
+}
+
+// ---------- state ----------
+const newShaft = () => ({ level: 1, mgr: false, deposit: 0, prog: 0, work: false });
+function fresh() {
+  return {
+    cash: 30, gold: 0, runEarned: 0, lifeEarned: 0, prestige: 0, goldAll: 0,
+    perm: { income: 0, speed: 0, offline: 0 },
+    boostUntil: 0,
+    shafts: [newShaft()],
+    elev: { level: 1, mgr: false, load: 0, prog: 0, work: false, station: 0 },
+    wh: { level: 1, mgr: false, load: 0, prog: 0, work: false },
+    sound: true, buyMode: 1, saved: Date.now()
+  };
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return fresh();
+    const d = JSON.parse(raw), f = fresh();
+    const s = Object.assign(f, d);
+    s.perm = Object.assign(f.perm, d.perm || {});
+    s.elev = Object.assign(f.elev, d.elev || {});
+    s.wh = Object.assign(f.wh, d.wh || {});
+    s.shafts = (d.shafts && d.shafts.length ? d.shafts : f.shafts).map(x => Object.assign(newShaft(), x));
+    for (const k of ['cash', 'gold', 'runEarned', 'lifeEarned']) if (!isFinite(s[k])) s[k] = 0;
+    return s;
+  } catch (e) { return fresh(); }
+}
+function save() {
+  try { state.saved = Date.now(); localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+let state = load();
+let R = {}, unlockBtn = null, cabin = null, cabinCg = null, rate = 0, acc = 0, rateT = 0, crateT = rand(40, 80);
+
+// ---------- rumus ----------
+const S = () => Math.pow(7, state.shafts.length - 1);
+const boostActive = () => Date.now() < state.boostUntil;
+const speedMul = () => 1 + 0.1 * state.perm.speed;
+const incomeMul = () => (1 + 0.15 * state.perm.income) * (1 + 0.1 * state.prestige) * (boostActive() ? 2 : 1);
+const shaftCarry = (i, L) => 10 * Math.pow(7, i) * L * ms(L);
+const shaftTime = L => Math.max(0.6, Math.max(1.2, 5 * Math.pow(0.99, L - 1)) / speedMul());
+const elevCap = L => 40 * L * ms(L) * S();
+const elevTime = L => Math.max(0.8, Math.max(1.5, 6 * Math.pow(0.99, L - 1)) / speedMul());
+const whCap = L => 30 * L * ms(L) * S();
+const whTime = L => Math.max(0.8, Math.max(1.5, 5.5 * Math.pow(0.99, L - 1)) / speedMul());
+
+const obj = (k, i) => k === 'sh' ? state.shafts[i] : k === 'el' ? state.elev : state.wh;
+const baseCost = (k, i) => k === 'sh' ? 18 * Math.pow(6, i) : k === 'el' ? 120 * S() : 100 * S();
+const mgrCost = (k, i) => k === 'sh' ? 400 * Math.pow(8, i) : k === 'el' ? 1500 * S() : 1200 * S();
+const unlockCost = i => 600 * Math.pow(8, i - 1);
+function bulkCost(base, L, q) { let c = 0, v = base * Math.pow(GROW, L - 1); for (let k = 0; k < q; k++) { c += v; v *= GROW; } return c; }
+function maxAfford(base, L, cash) {
+  let q = 0, c = 0, v = base * Math.pow(GROW, L - 1);
+  while (L + q < MAX_LEVEL && q < 1000) { if (c + v > cash) break; c += v; v *= GROW; q++; }
+  return q;
+}
+function qtyInfo(k, i) {
+  const o = obj(k, i), room = MAX_LEVEL - o.level, b = baseCost(k, i);
+  if (room <= 0) return { q: 0, cost: 0, can: false, maxed: true };
+  let q;
+  if (state.buyMode === 'max') {
+    q = maxAfford(b, o.level, state.cash);
+    const showQ = q || 1;
+    return { q, cost: bulkCost(b, o.level, showQ), can: q > 0 };
+  }
+  q = Math.min(state.buyMode, room);
+  const cost = bulkCost(b, o.level, q);
+  return { q, cost, can: state.cash >= cost };
+}
+
+// ---------- suara & pesan ----------
+let ac = null;
+function beep(f = 660, d = 0.08, type = 'square', v = 0.04) {
+  if (!state.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = f; g.gain.value = v;
+    o.connect(g); g.connect(ac.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + d);
+    o.stop(ac.currentTime + d);
+  } catch (e) {}
+}
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function popText(key, text) {
+  const r = R[key]; if (!r || !r.strip) return;
+  const p = document.createElement('span'); p.className = 'pop'; p.textContent = text;
+  r.strip.appendChild(p); setTimeout(() => p.remove(), 1000);
+}
+
+// ---------- simulasi ----------
+function totalDeposit() { return state.shafts.reduce((a, s) => a + s.deposit, 0); }
+function loadElev() {
+  const e = state.elev, tot = totalDeposit();
+  if (e.work || tot <= 0) return false;
+  let take = Math.min(elevCap(e.level), tot), rem = take;
+  for (const sh of state.shafts) { const t = Math.min(sh.deposit, rem); sh.deposit -= t; rem -= t; if (rem <= 0) break; }
+  e.load = take; e.work = true; e.prog = 0;
+  return true;
+}
+function loadWh() {
+  const w = state.wh, e = state.elev;
+  if (w.work || e.station <= 0) return false;
+  const take = Math.min(whCap(w.level), e.station);
+  e.station -= take; w.load = take; w.work = true; w.prog = 0;
+  return true;
+}
+function earn(amount) {
+  state.cash += amount; state.runEarned += amount; state.lifeEarned += amount; acc += amount;
+}
+function tick(dt) {
+  const s = state;
+  s.shafts.forEach((sh, i) => {
+    if (!sh.work && sh.mgr) { sh.work = true; sh.prog = 0; }
+    if (sh.work) {
+      sh.prog += dt / shaftTime(sh.level);
+      while (sh.prog >= 1) {
+        sh.prog -= 1; sh.deposit += shaftCarry(i, sh.level);
+        if (!sh.mgr) { sh.work = false; sh.prog = 0; break; }
+      }
+    }
+  });
+  const e = s.elev;
+  if (!e.work && e.mgr) loadElev();
+  if (e.work) {
+    e.prog += dt / elevTime(e.level);
+    if (e.prog >= 1) { e.station += e.load; e.load = 0; e.work = false; e.prog = 0; }
+  }
+  const w = s.wh;
+  if (!w.work && w.mgr) loadWh();
+  if (w.work) {
+    w.prog += dt / whTime(w.level);
+    if (w.prog >= 1) {
+      const g = w.load * incomeMul();
+      earn(g); w.load = 0; w.work = false; w.prog = 0;
+      popText('wh0', '+$' + fmt(g)); beep(880, 0.06, 'triangle', 0.05);
+    }
+  }
+  rateT += dt;
+  if (rateT >= 4) { rate = rate * 0.4 + (acc / rateT) * 0.6; acc = 0; rateT = 0; }
+  crateT -= dt;
+  if (crateT <= 0) { spawnCrate(); crateT = rand(50, 110); }
+}
+
+// ---------- offline ----------
+function offlineRate() {
+  const e = state.elev, w = state.wh;
+  if (!e.mgr || !w.mgr) return 0;
+  let sup = 0;
+  state.shafts.forEach((sh, i) => { if (sh.mgr) sup += shaftCarry(i, sh.level) / shaftTime(sh.level); });
+  const er = elevCap(e.level) / elevTime(e.level), wr = whCap(w.level) / whTime(w.level);
+  return Math.min(sup, er, wr) * incomeMul();
+}
+function offlineGain(sec) {
+  sec = Math.min(sec, 12 * 3600);
+  const eff = 0.5 + 0.1 * state.perm.offline;
+  return offlineRate() * sec * eff;
+}
+
+// ---------- aksi ----------
+function tapRow(k, i) {
+  if (k === 'sh') { const sh = state.shafts[i]; if (!sh.work) { sh.work = true; sh.prog = 0; beep(300, 0.05); } }
+  else if (k === 'el') { if (!state.elev.work) { if (loadElev()) beep(400, 0.05); else toast('Belum ada hasil galian untuk diangkut'); } }
+  else { if (!state.wh.work) { if (loadWh()) beep(500, 0.05); else toast('Belum ada muatan di atas lift'); } }
+}
+function upgrade(k, i) {
+  const o = obj(k, i), info = qtyInfo(k, i);
+  if (info.maxed) return;
+  if (!info.can) { toast('Uang tidak cukup'); return; }
+  const before = ms(o.level);
+  state.cash -= info.cost; o.level += info.q;
+  beep(520, 0.08, 'triangle');
+  if (ms(o.level) > before) { toast('🎉 Milestone! Produksi ×2'); beep(900, 0.25, 'sawtooth', 0.05); }
+  updateText();
+}
+function buyManager(k, i) {
+  const o = obj(k, i), c = mgrCost(k, i);
+  if (o.mgr) return;
+  if (state.cash < c) { toast('Uang tidak cukup untuk manajer'); return; }
+  state.cash -= c; o.mgr = true; beep(700, 0.15, 'sine', 0.06);
+  toast('👔 Manajer bekerja otomatis!');
+  updateText();
+}
+function unlockShaft() {
+  const i = state.shafts.length;
+  if (i >= MAX_SHAFTS) return;
+  const c = unlockCost(i);
+  if (state.cash < c) { toast('Uang tidak cukup'); return; }
+  state.cash -= c; state.shafts.push(newShaft());
+  beep(600, 0.2, 'sawtooth', 0.05); toast('⛏️ Tambang baru dibuka!');
+  buildMine(); updateText();
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+function useBoost() {
+  if (boostActive()) { toast('⚡ Boost masih aktif: ' + fmtTime((state.boostUntil - Date.now()) / 1000)); return; }
+  if (state.gold < 5) { toast('Butuh 5 🪙. Ketuk peti 📦 yang melayang untuk mendapat emas!'); return; }
+  state.gold -= 5; state.boostUntil = Date.now() + 5 * 60000;
+  beep(800, 0.3, 'sine', 0.07); toast('⚡ Boost ×2 selama 5 menit!'); updateText();
+}
+
+// ---------- peti hadiah ----------
+function spawnCrate() {
+  if (document.hidden) return;
+  const b = document.createElement('button');
+  b.className = 'crate'; b.textContent = '📦';
+  b.style.left = rand(8, 78) + '%'; b.style.top = rand(18, 62) + '%';
+  const kill = setTimeout(() => b.remove(), 15000);
+  b.onclick = () => {
+    clearTimeout(kill); b.remove();
+    const r = Math.random();
+    if (r < 0.3) { const g = 1 + Math.floor(Math.random() * 3); state.gold += g; state.goldAll += g; toast(`🪙 Kamu mendapat ${g} emas!`); beep(1000, 0.3, 'sine', 0.07); }
+    else if (r < 0.4) { state.boostUntil = Math.max(Date.now(), state.boostUntil) + 60000; toast('⚡ Boost ×2 selama 1 menit!'); beep(800, 0.3, 'sine', 0.07); }
+    else { const c = Math.max(100, rate * 120); earn(c); toast('💵 Hadiah $' + fmt(c)); beep(900, 0.2, 'triangle', 0.06); }
+    updateText();
+  };
+  $('#layer').appendChild(b);
+}
+
+// ---------- UI tambang ----------
+const BODY = `<div class="body">
+  <div class="info"><div class="ttl"><span class="tt"></span><small class="lv"></small></div><div class="sub"></div><div class="bar"><i></i></div></div>
+  <div class="acts"><button class="up" data-act="up"><span class="upl"></span><b class="upc"></b></button><button class="mg" data-act="mgr"></button></div>
+</div>`;
+function whHTML() {
+  return `<section class="row sf wh" data-k="wh" data-i="0">
+    <div class="strip s-wh" data-act="tap"><span class="cloud" style="left:8%">☁️</span><span class="cloud" style="left:70%;top:22px">☁️</span>
+      <span class="ent" style="left:9%">🏗️</span><span class="ent" style="left:91%">🏭</span><span class="ent mv">🚚</span><span class="hint">Ketuk truk!</span></div>
+    ${BODY}</section>`;
+}
+function elHTML() { return `<section class="row sf el" data-k="el" data-i="0">${BODY}</section>`; }
+function shHTML(i) {
+  return `<section class="row shaft" data-k="sh" data-i="${i}">
+    <div class="strip s-sh" data-act="tap"><span class="stk"></span>
+      <span class="ent" style="left:9%">📦</span><span class="ent" style="left:92%">🪨</span>
+      <span class="ent mv">👷</span><span class="ent mv">👷</span><span class="ent mv">👷</span><span class="hint">Ketuk!</span></div>
+    ${BODY}</section>`;
+}
+function buildMine() {
+  const n = state.shafts.length;
+  let floors = '';
+  for (let i = 0; i < n; i++) floors += `<i class="fl" style="top:${i * RH + 14}px">${i + 1}</i>`;
+  let rows = '';
+  for (let i = 0; i < n; i++) rows += shHTML(i);
+  let h = whHTML() + elHTML() +
+    `<div class="mine"><div class="shaftcol" data-act="tapel" style="height:${n * RH}px"><span class="hint" id="elhint" style="top:70px">Ketuk lift!</span>${floors}
+      <div class="cabin" id="cabin"><span class="cg"></span>🧑‍💼</div></div><div class="shafts">${rows}</div></div>`;
+  if (n < MAX_SHAFTS) h += '<section class="row unlock"><button class="unl" data-act="unlock"></button></section>';
+  $('#mine').innerHTML = h;
+  R = {};
+  document.querySelectorAll('#mine .row[data-k]').forEach(r => {
+    const mvs = [...r.querySelectorAll('.mv')];
+    R[r.dataset.k + r.dataset.i] = {
+      root: r, strip: r.querySelector('.strip'), mvs, hint: r.querySelector('.hint'), stk: r.querySelector('.stk'),
+      tt: r.querySelector('.tt'), lv: r.querySelector('.lv'), sub: r.querySelector('.sub'), bar: r.querySelector('.bar i'),
+      up: r.querySelector('.up'), upl: r.querySelector('.upl'), upc: r.querySelector('.upc'), mg: r.querySelector('.mg'), cnt: 0
+    };
+  });
+  cabin = $('#cabin'); cabinCg = cabin.querySelector('.cg');
+  unlockBtn = document.querySelector('.unl');
+}
+function updateRow(k, i) {
+  const r = R[k + i]; if (!r) return;
+  const o = obj(k, i);
+  let sub;
+  if (k === 'sh') {
+    r.tt.textContent = 'Tambang #' + (i + 1);
+    const nm = nextMs(o.level);
+    sub = `⛏️ ${fmt(shaftCarry(i, o.level))} · ${shaftTime(o.level).toFixed(1)}s<br>${nm ? '★ ×2 di Lv ' + nm : '★ semua bonus tercapai'}`;
+    r.stk.textContent = '📦 ' + fmt(o.deposit);
+    r.hint.style.display = !o.mgr && !o.work ? '' : 'none';
+    const c = Math.min(3, 1 + Math.floor(o.level / 25));
+    if (r.cnt !== c) { r.cnt = c; r.mvs.forEach((m, j) => m.style.display = j < c ? '' : 'none'); }
+  } else if (k === 'el') {
+    r.tt.textContent = 'Lift';
+    sub = `🛗 Muatan maks ${fmt(elevCap(o.level))} · ${elevTime(o.level).toFixed(1)}s<br>⏳ Di bawah ${fmt(totalDeposit())} · Di atas ${fmt(o.station)}`;
+    const hint = $('#elhint');
+    if (hint) hint.style.display = !o.mgr && !o.work && totalDeposit() > 0 ? '' : 'none';
+  } else {
+    r.tt.textContent = 'Gudang';
+    sub = `🚚 Muatan maks ${fmt(whCap(o.level))} · ${whTime(o.level).toFixed(1)}s<br>⏳ Antri ${fmt(state.elev.station)}`;
+    r.hint.style.display = !o.mgr && !o.work && state.elev.station > 0 ? '' : 'none';
+  }
+  r.lv.textContent = 'Lv ' + o.level;
+  r.sub.innerHTML = sub;
+  const info = qtyInfo(k, i);
+  if (info.maxed) { r.upl.textContent = 'MAKS'; r.upc.textContent = ''; r.up.classList.add('dis'); }
+  else {
+    const q = info.q || 1;
+    r.upl.textContent = 'Naik ×' + q;
+    r.upc.textContent = '$' + fmt(info.cost);
+    r.up.classList.toggle('dis', !info.can);
+  }
+  if (o.mgr) { r.mg.textContent = '✅ Otomatis'; r.mg.classList.add('own'); r.mg.classList.remove('dis'); }
+  else { const c = mgrCost(k, i); r.mg.textContent = '👔 $' + fmt(c); r.mg.classList.remove('own'); r.mg.classList.toggle('dis', state.cash < c); }
+}
+function updateText() {
+  $('#cash').textContent = '$' + fmt(state.cash);
+  $('#rate').textContent = '≈ $' + fmt(rate) + '/dtk';
+  $('#gold').textContent = Math.floor(state.gold);
+  $('#buyBtn').textContent = state.buyMode === 'max' ? 'MAX' : 'x' + state.buyMode;
+  updateRow('wh', 0); updateRow('el', 0);
+  state.shafts.forEach((_, i) => updateRow('sh', i));
+  if (unlockBtn) {
+    const i = state.shafts.length, c = unlockCost(i);
+    unlockBtn.innerHTML = `⛏️ Buka Tambang #${i + 1}<b>$${fmt(c)}</b>`;
+    unlockBtn.classList.toggle('dis', state.cash < c);
+  }
+  const bb = $('#boostBar');
+  if (boostActive()) { bb.hidden = false; bb.textContent = '⚡ Boost ×2 aktif: ' + fmtTime((state.boostUntil - Date.now()) / 1000); }
+  else bb.hidden = true;
+}
+function place(el, x, flip, dig) {
+  el.style.left = x + '%';
+  el.style.transform = `translateX(-50%) scaleX(${flip ? -1 : 1})`;
+  el.classList.toggle('dig', !!dig);
+}
+function animate() {
+  state.shafts.forEach((sh, i) => {
+    const r = R['sh' + i]; if (!r) return;
+    const p = sh.work ? sh.prog : 0;
+    let x = 30, flip = false, dig = false;
+    if (sh.work) {
+      if (p < 0.35) x = 30 + (p / 0.35) * 46;
+      else if (p < 0.65) { x = 76; dig = true; }
+      else { x = 76 - ((p - 0.65) / 0.35) * 46; flip = true; }
+    }
+    r.mvs.forEach((m, j) => place(m, x + (flip ? j : -j) * 10, flip, dig && true));
+    r.bar.style.width = (sh.work ? p * 100 : 0) + '%';
+  });
+  const e = state.elev, re = R.el0;
+  if (re) {
+    const p = e.work ? e.prog : 0;
+    const span = Math.max(state.shafts.length - 1, 0.5) * RH;
+    const y = e.work ? (p < 0.5 ? (p / 0.5) * span : span - ((p - 0.5) / 0.5) * span) : 0;
+    if (cabin) { cabin.style.transform = `translateY(${8 + y}px)`; cabinCg.textContent = e.work && p >= 0.5 ? '💎' : ''; }
+    re.bar.style.width = (e.work ? p * 100 : 0) + '%';
+  }
+  const w = state.wh, rw = R.wh0;
+  if (rw) {
+    const p = w.work ? w.prog : 0;
+    let x = 80, flip = false;
+    if (w.work) { if (p < 0.5) x = 80 - (p / 0.5) * 62; else { x = 18 + ((p - 0.5) / 0.5) * 62; flip = true; } }
+    place(rw.mvs[0], x, flip, false); rw.bar.style.width = (w.work ? p * 100 : 0) + '%';
+  }
+}
+
+// ---------- modal ----------
+function openModal(html) { $('#sheet').innerHTML = html; $('#modal').hidden = false; }
+function closeModal() { $('#modal').hidden = true; }
+const SHOP = [
+  { id: 'boost', name: '⚡ Boost Pendapatan ×2', desc: 'Pendapatan ×2 selama 5 menit (bisa ditumpuk)', cost: () => 5 },
+  { id: 'income', name: '💰 Pendapatan Permanen', desc: '+15% pendapatan setiap level', max: 20, lvl: () => state.perm.income, cost: () => 10 * (state.perm.income + 1) },
+  { id: 'speed', name: '🚀 Kecepatan Kerja', desc: '+10% kecepatan semua pekerja setiap level', max: 10, lvl: () => state.perm.speed, cost: () => 15 * (state.perm.speed + 1) },
+  { id: 'offline', name: '🌙 Bonus Offline', desc: '+10% efisiensi saat game ditutup (dasar 50%)', max: 5, lvl: () => state.perm.offline, cost: () => 8 * (state.perm.offline + 1) }
+];
+function openShop() {
+  let h = `<h2>🪙 Toko Emas</h2><p>Kamu punya <b style="color:var(--gold)">${Math.floor(state.gold)} emas</b>. Dapatkan emas dari peti hadiah yang muncul acak, atau dari Ekspansi (menu ☰).</p>`;
+  for (const it of SHOP) {
+    const lvl = it.lvl ? it.lvl() : 0, maxed = it.max && lvl >= it.max, c = it.cost();
+    h += `<div class="item"><div class="t"><b>${it.name}${it.max ? ` <small>(${lvl}/${it.max})</small>` : ''}</b><span>${it.desc}</span></div>` +
+      (maxed ? '<span class="btn dis">MAKS</span>' : `<button class="btn gold ${state.gold < c ? 'dis' : ''}" data-act="shopbuy" data-id="${it.id}">🪙 ${c}</button>`) + '</div>';
+  }
+  openModal(h);
+}
+function shopBuy(id) {
+  const it = SHOP.find(x => x.id === id); if (!it) return;
+  const c = it.cost();
+  if (it.max && it.lvl() >= it.max) return;
+  if (state.gold < c) { toast('Emas tidak cukup'); return; }
+  state.gold -= c;
+  if (id === 'boost') state.boostUntil = Math.max(Date.now(), state.boostUntil) + 5 * 60000;
+  else state.perm[id]++;
+  beep(1000, 0.2, 'sine', 0.06); updateText(); openShop();
+}
+function prestigeGain() { return Math.floor(2 * Math.sqrt(state.runEarned / 1e6)); }
+function openMenu() {
+  const g = prestigeGain();
+  openModal(`<h2>☰ Menu</h2>
+    <div class="item"><div class="t"><b>🏔️ Ekspansi (Prestige)</b><span>Reset tambang & uang, tapi dapat +${g} 🪙 dan bonus permanen +10% pendapatan. Emas & toko tetap dimiliki.</span></div></div>
+    <button class="btn full ${g < 1 ? 'dis' : 'gold'}" data-act="prestige">${g < 1 ? 'Butuh pendapatan lebih besar (±$250K dalam sesi ini)' : 'Ekspansi sekarang (+' + g + ' 🪙)'}</button>
+    <h2 style="margin-top:18px">📊 Statistik</h2>
+    <div class="stat"><span>Total pendapatan</span><b>$${fmt(state.lifeEarned)}</b></div>
+    <div class="stat"><span>Pendapatan sesi ini</span><b>$${fmt(state.runEarned)}</b></div>
+    <div class="stat"><span>Ekspansi dilakukan</span><b>${state.prestige}</b></div>
+    <div class="stat"><span>Pengali pendapatan</span><b>×${incomeMul().toFixed(2)}</b></div>
+    <div class="stat"><span>Efisiensi offline</span><b>${Math.round((0.5 + 0.1 * state.perm.offline) * 100)}%</b></div>
+    <h2 style="margin-top:18px">⚙️ Pengaturan</h2>
+    <button class="btn full" data-act="sound">Suara: ${state.sound ? 'Hidup 🔊' : 'Mati 🔇'}</button>
+    <button class="btn full red" data-act="reset">Hapus semua progres</button>
+    <h2 style="margin-top:18px">💡 Cara bermain</h2>
+    <p>1. Ketuk penambang, lift (kolom kiri), dan truk gudang untuk bekerja manual.<br>
+    2. Hasil galian → diangkut lift → dibawa truk gudang → jadi uang.<br>
+    3. Naikkan level untuk produksi lebih besar. Setiap milestone level (10, 25, 50, 100, ...) menggandakan produksi.<br>
+    4. Beli manajer 👔 supaya bekerja otomatis, bahkan saat game ditutup (butuh manajer di lift, gudang, dan tambang).<br>
+    5. Ketuk peti 📦 yang melayang untuk hadiah emas, uang, atau boost.<br>
+    6. Tombol <b>x1/x10/x100/MAX</b> di bawah mengatur jumlah level yang dibeli sekaligus.</p>
+    <p style="text-align:center;margin-top:14px">Versi ${VERSION.startsWith('__') ? 'dev' : VERSION}</p>`);
+}
+function doPrestige() {
+  const g = prestigeGain();
+  if (g < 1) return;
+  if (!confirm(`Ekspansi? Tambang direset dan kamu mendapat ${g} emas serta bonus permanen +10%.`)) return;
+  const keep = state, f = fresh();
+  f.gold = keep.gold + g; f.goldAll = keep.goldAll + g; f.prestige = keep.prestige + 1;
+  f.perm = keep.perm; f.lifeEarned = keep.lifeEarned; f.sound = keep.sound; f.buyMode = keep.buyMode; f.boostUntil = keep.boostUntil;
+  state = f; rate = 0; acc = 0; rateT = 0;
+  closeModal(); buildMine(); updateText(); save();
+  toast(`🏔️ Ekspansi selesai! +${g} 🪙`);
+}
+
+// ---------- event ----------
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-act]'); if (!t) return;
+  const act = t.dataset.act, row = t.closest('.row[data-k]');
+  const k = row && row.dataset.k, i = row ? +row.dataset.i : 0;
+  switch (act) {
+    case 'tap': tapRow(k, i); break;
+    case 'tapel': tapRow('el', 0); break;
+    case 'up': upgrade(k, i); break;
+    case 'mgr': buyManager(k, i); break;
+    case 'unlock': unlockShaft(); break;
+    case 'boost': useBoost(); break;
+    case 'buymode': { const m = [1, 10, 100, 'max']; state.buyMode = m[(m.indexOf(state.buyMode) + 1) % 4]; updateText(); break; }
+    case 'shop': openShop(); break;
+    case 'menu': openMenu(); break;
+    case 'close': closeModal(); break;
+    case 'shopbuy': shopBuy(t.dataset.id); break;
+    case 'prestige': doPrestige(); break;
+    case 'sound': state.sound = !state.sound; openMenu(); break;
+    case 'reset': if (confirm('Hapus SEMUA progres? Ini tidak bisa dibatalkan.')) { state = fresh(); rate = 0; closeModal(); buildMine(); updateText(); save(); } break;
+  }
+});
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+// ---------- loop ----------
+let last = performance.now(), uiT = 0, saveT = 0;
+function frame(now) {
+  let dt = (now - last) / 1000; last = now;
+  if (dt > 3) {
+    const g = offlineGain(dt);
+    if (g > 0) { earn(g); toast(`💤 Selama ${fmtTime(dt)} kamu pergi: +$${fmt(g)}`); }
+    dt = 0;
+  }
+  while (dt > 0) { const st = Math.min(dt, 0.25); tick(st); dt -= st; }
+  uiT += 1; if (uiT >= 6) { uiT = 0; updateText(); }
+  saveT += (now - (frame.p || now)) / 1000; frame.p = now;
+  if (saveT > 5) { saveT = 0; save(); }
+  animate();
+  requestAnimationFrame(frame);
+}
+window.addEventListener('beforeunload', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+
+// ---------- mulai ----------
+buildMine();
+{
+  const away = (Date.now() - (state.saved || Date.now())) / 1000;
+  const g = away > 60 ? offlineGain(away) : 0;
+  if (g > 0) {
+    earn(g);
+    updateText();
+    openModal(`<h2>💤 Selamat datang kembali!</h2><p>Kamu pergi selama <b>${fmtTime(away)}</b>. Manajermu terus bekerja dengan efisiensi ${Math.round((0.5 + 0.1 * state.perm.offline) * 100)}%.</p><div class="item"><div class="t"><b style="color:var(--cash);font-size:22px">+$${fmt(g)}</b></div></div><button class="btn full" data-act="close">Ambil!</button>`);
+  }
+}
+updateText();
+requestAnimationFrame(t => { last = t; frame(t); });
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+})();
+</script>
+</body>
+</html>
