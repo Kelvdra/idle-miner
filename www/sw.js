@@ -1,5 +1,5 @@
 // Service worker: cache semua file supaya game bisa dibuka offline.
-const CACHE = 'tambang-emas-v1';
+const CACHE = 'tambang-emas-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
